@@ -306,6 +306,7 @@ def render_sidebar(df: pd.DataFrame):
     st.sidebar.caption("📊 Données : WFP · FAO · Synthétiques")
     st.sidebar.caption("🔬 Modèles : Isolation Forest · Prophet")
     st.sidebar.caption("v2.0 — Streamlit Cloud")
+    st.sidebar.caption("© 2026 Chalabi Mohamed. All Rights Reserved.")
 
     return (
         sel_products or prod_pool[:4],

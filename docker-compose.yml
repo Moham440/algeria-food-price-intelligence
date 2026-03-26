@@ -1,0 +1,60 @@
+version: "3.9"
+
+services:
+  dashboard:
+    build: .
+    container_name: afpi-dashboard
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./data:/app/data
+      - ./models:/app/models
+      - ./logs:/app/logs
+    environment:
+      - PYTHONPATH=/app
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - redis
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8501/_stcore/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  api:
+    build: .
+    container_name: afpi-api
+    command: uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+      - ./models:/app/models
+    environment:
+      - PYTHONPATH=/app
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: afpi-redis
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+
+  mlflow:
+    image: python:3.10-slim
+    container_name: afpi-mlflow
+    command: >
+      sh -c "pip install mlflow -q &&
+             mlflow server --host 0.0.0.0 --port 5000
+             --backend-store-uri sqlite:///mlflow.db
+             --default-artifact-root /mlflow_artifacts"
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./mlflow_artifacts:/mlflow_artifacts
+    restart: unless-stopped

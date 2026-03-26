@@ -1,0 +1,251 @@
+# ============================================================
+# Algeria Food Price Intelligence System - Configuration
+# ============================================================
+
+project:
+  name: "Algeria Food Price Intelligence System"
+  version: "1.0.0"
+  description: "End-to-end food price monitoring and prediction for Algeria"
+
+# ── Data Sources ──────────────────────────────────────────────
+data_sources:
+  fao:
+    base_url: "https://fenixservices.fao.org/faostat/api/v1"
+    endpoints:
+      price_data: "/data/PP"
+      food_balance: "/data/FBS"
+    timeout: 30
+    retry_attempts: 3
+    rate_limit_delay: 1.0  # seconds between requests
+
+  wfp:
+    base_url: "https://data.humdata.org"
+    dataset_id: "wfp-food-prices-for-algeria"
+    api_url: "https://api.hungermapdata.org/v2"
+    timeout: 30
+    retry_attempts: 3
+
+  world_bank:
+    base_url: "https://api.worldbank.org/v2"
+    indicators:
+      inflation: "FP.CPI.TOTL.ZG"
+      gdp_per_capita: "NY.GDP.PCAP.CD"
+    country_code: "DZA"
+
+# ── Regions (Wilayas) ──────────────────────────────────────────
+regions:
+  - name: "Alger"
+    code: "ALG"
+    latitude: 36.7538
+    longitude: 3.0588
+    wilaya_number: 16
+  - name: "Oran"
+    code: "ORA"
+    latitude: 35.6969
+    longitude: -0.6331
+    wilaya_number: 31
+  - name: "Constantine"
+    code: "CON"
+    latitude: 36.3650
+    longitude: 6.6147
+    wilaya_number: 25
+  - name: "Annaba"
+    code: "ANN"
+    latitude: 36.9000
+    longitude: 7.7667
+    wilaya_number: 23
+  - name: "Tlemcen"
+    code: "TLE"
+    latitude: 34.8828
+    longitude: -1.3167
+    wilaya_number: 13
+  - name: "Sétif"
+    code: "SET"
+    latitude: 36.1833
+    longitude: 5.4000
+    wilaya_number: 19
+  - name: "Blida"
+    code: "BLI"
+    latitude: 36.4703
+    longitude: 2.8277
+    wilaya_number: 9
+  - name: "Batna"
+    code: "BAT"
+    latitude: 35.5560
+    longitude: 6.1740
+    wilaya_number: 5
+  - name: "Biskra"
+    code: "BIS"
+    latitude: 34.8500
+    longitude: 5.7333
+    wilaya_number: 7
+  - name: "Béjaïa"
+    code: "BEJ"
+    latitude: 36.7509
+    longitude: 5.0564
+    wilaya_number: 6
+
+# ── Food Products ──────────────────────────────────────────────
+products:
+  vegetables:
+    - name: "Tomates"
+      code: "TOM"
+      unit: "kg"
+      typical_price_range: [30, 150]  # DZD
+    - name: "Pommes de terre"
+      code: "POT"
+      unit: "kg"
+      typical_price_range: [30, 100]
+    - name: "Oignons"
+      code: "ONI"
+      unit: "kg"
+      typical_price_range: [30, 120]
+    - name: "Carottes"
+      code: "CAR"
+      unit: "kg"
+      typical_price_range: [40, 100]
+
+  proteins:
+    - name: "Poulet"
+      code: "CHK"
+      unit: "kg"
+      typical_price_range: [280, 500]
+    - name: "Viande rouge (mouton)"
+      code: "LAM"
+      unit: "kg"
+      typical_price_range: [900, 1800]
+    - name: "Viande rouge (boeuf)"
+      code: "BEF"
+      unit: "kg"
+      typical_price_range: [1000, 2000]
+    - name: "Oeufs"
+      code: "EGG"
+      unit: "dozen"
+      typical_price_range: [150, 300]
+
+  cereals:
+    - name: "Pain"
+      code: "BRD"
+      unit: "kg"
+      typical_price_range: [20, 50]
+    - name: "Semoule"
+      code: "SEM"
+      unit: "kg"
+      typical_price_range: [50, 120]
+    - name: "Farine"
+      code: "FLR"
+      unit: "kg"
+      typical_price_range: [40, 100]
+    - name: "Riz"
+      code: "RIC"
+      unit: "kg"
+      typical_price_range: [100, 250]
+
+  staples:
+    - name: "Huile végétale"
+      code: "OIL"
+      unit: "liter"
+      typical_price_range: [180, 350]
+    - name: "Sucre"
+      code: "SUG"
+      unit: "kg"
+      typical_price_range: [70, 150]
+    - name: "Lait"
+      code: "MLK"
+      unit: "liter"
+      typical_price_range: [60, 100]
+    - name: "Beurre"
+      code: "BUT"
+      unit: "kg"
+      typical_price_range: [600, 1200]
+
+# ── Data Storage ──────────────────────────────────────────────
+storage:
+  raw_data_path: "data/raw"
+  processed_data_path: "data/processed"
+  external_data_path: "data/external"
+  models_path: "models/saved"
+  cache_path: ".cache"
+  cache_ttl: 3600  # 1 hour in seconds
+
+# ── Preprocessing ─────────────────────────────────────────────
+preprocessing:
+  missing_value_strategy: "interpolate"  # or 'mean', 'median', 'drop'
+  outlier_method: "iqr"  # or 'zscore', 'isolation_forest'
+  outlier_threshold: 3.0
+  normalization: "minmax"  # or 'standard', 'robust'
+  min_data_points: 30  # minimum records needed per product/region
+
+# ── Anomaly Detection ─────────────────────────────────────────
+anomaly_detection:
+  algorithms:
+    - name: "isolation_forest"
+      contamination: 0.05
+      n_estimators: 100
+      random_state: 42
+    - name: "one_class_svm"
+      nu: 0.05
+      kernel: "rbf"
+      gamma: "auto"
+  alert_threshold: 0.7  # anomaly score threshold for alerts
+  window_size: 30  # rolling window in days
+
+# ── Forecasting ───────────────────────────────────────────────
+forecasting:
+  prophet:
+    seasonality_mode: "multiplicative"
+    yearly_seasonality: true
+    weekly_seasonality: true
+    daily_seasonality: false
+    changepoint_prior_scale: 0.05
+    forecast_periods: 30  # days ahead
+
+  lstm:
+    sequence_length: 60
+    hidden_units: [128, 64]
+    dropout: 0.2
+    epochs: 100
+    batch_size: 32
+    learning_rate: 0.001
+    validation_split: 0.2
+
+  ensemble:
+    prophet_weight: 0.5
+    lstm_weight: 0.5
+
+# ── Dashboard ─────────────────────────────────────────────────
+dashboard:
+  title: "Algeria Food Price Intelligence"
+  host: "0.0.0.0"
+  port: 8501
+  theme:
+    primary_color: "#006233"  # Algeria green
+    background_color: "#FFFFFF"
+    secondary_background_color: "#F0F2F6"
+    text_color: "#262730"
+    font: "sans serif"
+
+# ── Logging ───────────────────────────────────────────────────
+logging:
+  level: "INFO"  # DEBUG, INFO, WARNING, ERROR
+  format: "{time:YYYY-MM-DD HH:mm:ss} | {level} | {name} | {message}"
+  log_file: "logs/app.log"
+  rotation: "10 MB"
+  retention: "1 week"
+
+# ── MLflow (Bonus) ────────────────────────────────────────────
+mlflow:
+  tracking_uri: "sqlite:///mlflow.db"
+  experiment_name: "algeria-food-price"
+  artifact_location: "mlflow_artifacts"
+
+# ── Notifications (Bonus) ─────────────────────────────────────
+notifications:
+  email:
+    enabled: false
+    smtp_server: "smtp.gmail.com"
+    smtp_port: 587
+    from_email: "alerts@food-intelligence.dz"
+  sms:
+    enabled: false
+    provider: "twilio"
